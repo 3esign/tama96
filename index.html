@@ -638,21 +638,21 @@
         <div style="margin-top: 14px;">
           <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 4px;">TAMA96 Token Address:</div>
           <div class="ca-box">
-            <span id="txtTokenCA">0xPENDING_LAUNCH</span>
+            <span id="txtTokenCA">0x93787f83FaA953b3314eba9546fF70c5BcB53a41</span>
             <button class="btn-copy" onclick="copyCA('txtTokenCA')">Copy CA</button>
           </div>
 
           <div style="font-size: 12px; color: var(--text-dim); margin-top: 10px; margin-bottom: 4px;">TamaPet Contract Address:</div>
           <div class="ca-box">
-            <span id="txtPetCA">0xPENDING_DEPLOY</span>
+            <span id="txtPetCA">0xb602d252515A66fa08dD915DcC9d89f8b5D10b47</span>
             <button class="btn-copy" onclick="copyCA('txtPetCA')">Copy CA</button>
           </div>
         </div>
 
         <div class="links-grid">
-          <a class="btn-link" id="linkPons" href="https://www.ponsfamily.com/launchpad" target="_blank">🚀 Pons Launchpad</a>
-          <a class="btn-link" id="linkExplorer" href="https://explorer.mainnet.chain.robinhood.com" target="_blank">🔍 Explorer</a>
-          <a class="btn-link" href="https://explorer.mainnet.chain.robinhood.com/address/0x42df2a798f82289e177311362e8f5ccc45c1219c" target="_blank">🔒 Buyback Vault</a>
+          <a class="btn-link" id="linkPons" href="https://www.ponsfamily.com/launchpad/0x93787f83FaA953b3314eba9546fF70c5BcB53a41" target="_blank">🚀 Pons Launchpad</a>
+          <a class="btn-link" id="linkExplorer" href="https://explorer.mainnet.chain.robinhood.com/token/0x93787f83FaA953b3314eba9546fF70c5BcB53a41" target="_blank">🔍 Explorer</a>
+          <a class="btn-link" href="https://explorer.mainnet.chain.robinhood.com/token/0x93787f83FaA953b3314eba9546fF70c5BcB53a41/address/0x42df2a798f82289e177311362e8f5ccc45c1219c" target="_blank">🔒 Buyback Vault</a>
         </div>
       </div>
 
@@ -811,9 +811,9 @@
 
     // CONFIG PLACEHOLDERS (WILL BE REPLACED LIVE ON LAUNCH)
     const TAMA_CONFIG = {
-      token: '0xPENDING_LAUNCH',
-      curve: '0xPENDING_LAUNCH',
-      petContract: '0xPENDING_DEPLOY',
+      token: '0x93787f83FaA953b3314eba9546fF70c5BcB53a41',
+      curve: '0x93787f83FaA953b3314eba9546fF70c5BcB53a41',
+      petContract: '0xb602d252515A66fa08dD915DcC9d89f8b5D10b47',
       vault: '0x42df2a798f82289e177311362e8f5ccc45c1219c'
     };
 
@@ -846,7 +846,7 @@
                   chainName: 'Robinhood Chain Mainnet',
                   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
                   rpcUrls: [RPC_URL],
-                  blockExplorerUrls: ['https://explorer.mainnet.chain.robinhood.com']
+                  blockExplorerUrls: ['https://explorer.mainnet.chain.robinhood.com/token/0x93787f83FaA953b3314eba9546fF70c5BcB53a41']
                 }]
               });
             }
@@ -865,7 +865,7 @@
         if (!userAddress) return;
       }
 
-      if (TAMA_CONFIG.petContract === '0xPENDING_DEPLOY') {
+      if (TAMA_CONFIG.petContract === '0xb602d252515A66fa08dD915DcC9d89f8b5D10b47') {
         alert('Contract deployment in progress. Please check back in a few seconds!');
         return;
       }
