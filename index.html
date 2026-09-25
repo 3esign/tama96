@@ -812,7 +812,7 @@
     // CONFIG PLACEHOLDERS (WILL BE REPLACED LIVE ON LAUNCH)
     const TAMA_CONFIG = {
       token: '0x93787f83FaA953b3314eba9546fF70c5BcB53a41',
-      curve: '0x93787f83FaA953b3314eba9546fF70c5BcB53a41',
+      curve: '0x4f00bd7CAcf1Ef930ec143Bd40c47A569872AAD7',
       petContract: '0xb602d252515A66fa08dD915DcC9d89f8b5D10b47',
       vault: '0x42df2a798f82289e177311362e8f5ccc45c1219c'
     };
@@ -846,7 +846,7 @@
                   chainName: 'Robinhood Chain Mainnet',
                   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
                   rpcUrls: [RPC_URL],
-                  blockExplorerUrls: ['https://explorer.mainnet.chain.robinhood.com/token/0x93787f83FaA953b3314eba9546fF70c5BcB53a41']
+                  blockExplorerUrls: ['https://explorer.mainnet.chain.robinhood.com']
                 }]
               });
             }
@@ -859,29 +859,74 @@
 
     document.getElementById('btnConnect').addEventListener('click', connectWallet);
 
+    function encodeAbiStrings(selector, str1, str2) {
+      const enc = new TextEncoder();
+      const b1 = enc.encode(str1);
+      const b2 = enc.encode(str2);
+      
+      function padHex(num, bytes = 32) {
+        return num.toString(16).padStart(bytes * 2, '0');
+      }
+      function toHex(bytes) {
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      function padRight(hex) {
+        const padLen = (32 - (hex.length / 2 % 32)) % 32;
+        return hex + '00'.repeat(padLen);
+      }
+      
+      const offset1 = 64;
+      const hex1 = toHex(b1);
+      const paddedHex1 = padRight(hex1);
+      const lenPadded1 = paddedHex1.length / 2;
+      const offset2 = 64 + 32 + lenPadded1;
+      const hex2 = toHex(b2);
+      const paddedHex2 = padRight(hex2);
+
+      return selector +
+        padHex(offset1) +
+        padHex(offset2) +
+        padHex(b1.length) +
+        paddedHex1 +
+        padHex(b2.length) +
+        paddedHex2;
+    }
+
     async function sendMicroTx(methodSelector, nameArg) {
       if (!userAddress) {
         await connectWallet();
         if (!userAddress) return;
       }
 
-      if (TAMA_CONFIG.petContract === '0xb602d252515A66fa08dD915DcC9d89f8b5D10b47') {
-        alert('Contract deployment in progress. Please check back in a few seconds!');
-        return;
-      }
-
       const note = document.getElementById('inputNote').value.trim() || 'Tama treat';
-      // ABI encode: selector + 2 string parameters
-      // Minimal calldata pack
-      alert('Transacting on Robinhood Chain with 0.0001 ETH...');
+      const calldata = encodeAbiStrings(methodSelector, nameArg, note);
+
+      try {
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: userAddress,
+            to: TAMA_CONFIG.petContract,
+            value: '0x5af3107a4000', // 0.0001 ETH
+            data: calldata
+          }]
+        });
+        alert('Transaction submitted to Robinhood Chain!\nTx: ' + txHash);
+        petState = 'eating';
+        soundFeed();
+        setTimeout(refreshOnchainStatus, 3000);
+      } catch (err) {
+        console.error(err);
+        alert('Transaction rejected or failed: ' + (err.message || err));
+      }
     }
 
     document.getElementById('btnFeedOnchain').addEventListener('click', () => {
-      sendMicroTx('0xfeed', 'Pixel Snack');
+      sendMicroTx('0xdb6ed115', 'Pixel Snack'); // feedPet
     });
 
     document.getElementById('btnPlayOnchain').addEventListener('click', () => {
-      sendMicroTx('0xplay', 'Ball Game');
+      sendMicroTx('0x5d025d2f', 'Ball Game'); // playWithPet
     });
 
     function copyCA(elementId) {
@@ -893,7 +938,7 @@
 
     async function refreshOnchainStatus() {
       try {
-        const res = await fetch(RPC_URL, {
+        const resBlock = await fetch(RPC_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -903,10 +948,41 @@
             params: []
           })
         });
-        const data = await res.json();
-        const block = parseInt(data.result, 16);
+        const dataBlock = await resBlock.json();
+        const block = parseInt(dataBlock.result, 16);
         document.getElementById('lcdAge').textContent = 'BLK: ' + block;
-      } catch (e) {}
+
+        const resStatus = await fetch(RPC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'eth_call',
+            params: [{ to: TAMA_CONFIG.petContract, data: '0x4e69d560' }, 'latest']
+          })
+        });
+        const dataStatus = await resStatus.json();
+        if (dataStatus && dataStatus.result && dataStatus.result.length > 300) {
+          const hex = dataStatus.result;
+          const jackpotEth = Number(BigInt('0x' + hex.slice(2, 66))) / 1e18;
+          const feeds = Number(BigInt('0x' + hex.slice(66, 130)));
+          const plays = Number(BigInt('0x' + hex.slice(130, 194)));
+          const buybackEth = Number(BigInt('0x' + hex.slice(194, 258))) / 1e18;
+          const hunger = Number(BigInt('0x' + hex.slice(258, 322)));
+          const happiness = Number(BigInt('0x' + hex.slice(322, 386)));
+
+          document.getElementById('txtHunger').textContent = hunger + '% (' + (hunger < 40 ? 'Full' : 'Hungry') + ')';
+          document.getElementById('barHunger').style.width = Math.min(100, Math.max(5, hunger)) + '%';
+          document.getElementById('txtHappy').textContent = happiness + '% (' + (happiness > 60 ? 'Overjoyed' : 'Neutral') + ')';
+          document.getElementById('barHappy').style.width = Math.min(100, Math.max(5, happiness)) + '%';
+          document.getElementById('valJackpot').textContent = jackpotEth.toFixed(4) + ' ETH';
+          document.getElementById('valTotalFeeds').textContent = (feeds + plays).toString();
+          document.getElementById('valVaultEth').textContent = buybackEth > 0 ? buybackEth.toFixed(4) + ' ETH' : '50% of every fee';
+        }
+      } catch (e) {
+        console.warn('Status refresh error:', e);
+      }
     }
 
     refreshOnchainStatus();
